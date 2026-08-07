@@ -1,0 +1,16 @@
+# Python deps for AbanTour Social Agent
+# Windows PC:  python -m pip install -r requirements.txt
+# Render (web): same file is used by buildCommand
+
+Pillow>=10.0
+python-bidi>=0.4.2
+arabic-reshaper>=3.0.0
+openai>=1.30
+python-telegram-bot>=20.0
+instagrapi>=1.18
+pytrends>=4.7.0
+requests>=2.31
+python-dotenv>=1.0
+schedule>=1.2
+flask>=3.0
+gunicorn>=21.2

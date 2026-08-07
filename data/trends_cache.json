@@ -1,0 +1,22 @@
+{
+  "ts": 1785853988.0111103,
+  "date": "2026-08-04",
+  "google_trends": {
+    "error": "No module named 'pytrends'"
+  },
+  "competitors": [
+    {
+      "name": "علی‌بابا",
+      "url": "https://www.alibaba.ir"
+    },
+    {
+      "name": "سفرمارکت",
+      "url": "https://www.safarmarket.com"
+    },
+    {
+      "name": "فلایتیو",
+      "url": "https://www.flightio.com"
+    }
+  ],
+  "seasonal": "سفر تابستانی"
+}

@@ -1,0 +1,27 @@
+# secrets
+.env
+*.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# data / output (large media; keep structure only)
+data/agent_state.db
+data/trends_cache.json
+output/reels/*
+output/infographics/*
+tmp/*
+!output/reels/.gitkeep
+!output/infographics/.gitkeep
+!tmp/.gitkeep
+
+# logs
+logs/*
+!logs/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db

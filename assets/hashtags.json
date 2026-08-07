@@ -1,0 +1,15 @@
+{
+  "broad_fa": ["#سفر", "#گردشگری", "#تور", "#مسافرت", "#سفرخارجی", "#تعطیلات"],
+  "broad_en": ["#travel", "#tourism", "#vacation", "#wanderlust", "#flightdeals"],
+  "niche_fa": ["#بلیط_هواپیما", "#چارتر", "#ویزا", "#رزرو_هتل", "#تور_خارجی", "#ارزان_سفر", "#بار_مسافرتی"],
+  "niche_en": ["#flightticket", "#visa", "#hoteldeals", "#cheaptravel", "#traveltips"],
+  "brand": ["#آبان_تور", "#abantour", "#آژانس_هواپیمایی"],
+  "seasonal": ["#سفر_تابستان", "#سفر_نوروز", "#پاییز_گردشگری", "#سفر_ارزان"],
+  "mix_strategy": {
+    "high_competition": 3,
+    "medium_competition": 4,
+    "low_competition": 4,
+    "brand": 2,
+    "language_split_fa_en": "70/30"
+  }
+}

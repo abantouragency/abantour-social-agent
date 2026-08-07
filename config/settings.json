@@ -1,0 +1,120 @@
+{
+  "agent_name": "AbanTour Social Agent",
+  "owner": "AbanTour | آژانس هواپیمایی آبان تور",
+  "timezone": "Asia/Tehran",
+
+  "paths": {
+    "root": "C:/Users/CharismaStore/social_agent",
+    "fonts": "assets/fonts",
+    "templates": "assets/templates",
+    "output_reels": "output/reels",
+    "output_infographics": "output/infographics",
+    "staged": "output/staged",
+    "published": "output/published",
+    "tmp": "tmp",
+    "data": "data",
+    "logs": "logs"
+  },
+
+  "brand": {
+    "navy": "#0B1F3A",
+    "navy_deep": "#07142B",
+    "gold": "#D4AF37",
+    "gold_light": "#E8C766",
+    "white": "#F5F7FA",
+    "muted": "#9FB0C9",
+    "font_bold": "assets/fonts/Vazirmatn-Bold.ttf",
+    "font_regular": "assets/fonts/Vazirmatn-Regular.ttf",
+    "logo": "assets/templates/logo.png"
+  },
+
+  "content_pillars": [
+    {"id": "deals",      "name": "تخفیف و قیمت لحظه‌ای", "weight": 3, "emoji": "🎫"},
+    {"id": "visa",       "name": "ویزا و قوانین سفر",    "weight": 2, "emoji": "🛂"},
+    {"id": "hotel",      "name": "هتل و اقامت",          "weight": 2, "emoji": "🏨"},
+    {"id": "trend",      "name": "مقصدهای ترند فصلی",    "weight": 3, "emoji": "🌍"},
+    {"id": "tips",       "name": "آموزش و نکته سفر",     "weight": 2, "emoji": "💡"},
+    {"id": "story",      "name": "الهام و داستان سفر",   "weight": 1, "emoji": "✨"}
+  ],
+
+  "posting": {
+    "daily_slots": [
+      {"slot": "morning", "hour": 9,  "minute": 0},
+      {"slot": "evening", "hour": 18, "minute": 0}
+    ],
+    "formats_per_slot": {
+      "morning": ["reel", "infographic"],
+      "evening": ["reel", "infographic"]
+    },
+    "approval_required": true,
+    "approval_channel_id": "REPLACE_WITH_YOUR_PRIVATE_CHANNEL_ID",
+    "approval_command": "/publish"
+  },
+
+  "telegram": {
+    "bot_token_env": "TELEGRAM_BOT_TOKEN",
+    "public_channel": "@abantour_agency",
+    "private_channel_id_env": "TELEGRAM_PRIVATE_CHANNEL_ID"
+  },
+
+  "instagram": {
+    "enabled": true,
+    "username_env": "IG_USERNAME",
+    "password_env": "IG_PASSWORD",
+    "use_graph_api": false,
+    "ig_user_id_env": "IG_USER_ID",
+    "ig_access_token_env": "IG_ACCESS_TOKEN",
+    "caption_log": "data/ig_captions.jsonl"
+  },
+
+  "openai": {
+    "api_key_env": "OPENAI_API_KEY",
+    "model": "gpt-4o-mini",
+    "base_url": "https://api.openai.com/v1"
+  },
+
+  "trend_scout": {
+    "google_trends_geo": "IR",
+    "google_trends_keywords": ["تور", "بلیط هواپیما", "ویزا", "سفر خارجی", "اقساط سفر", "ارزان ترین مقصد"],
+    "competitors": [
+      {"name": "علی‌بابا", "url": "https://www.alibaba.ir"},
+      {"name": "سفرمارکت", "url": "https://www.safarmarket.com"},
+      {"name": "فلایتیو", "url": "https://www.flightio.com"}
+    ],
+    "cache_hours": 6
+  },
+
+  "cleanup": {
+    "tmp_every_run": true,
+    "keep_published_days": 30,
+    "keep_logs_days": 30
+  },
+
+  "analytics": {
+    "auto_tune": true,
+    "track_best_hours": true
+  },
+
+  "sora": {
+    "model": "sora",
+    "duration": 10,
+    "size": "1080x1920",
+    "enabled": false
+  },
+
+  "video_style": "B",
+
+  "media_host": {
+    "backend": "catbox",
+    "ftp_host_env": "FTP_HOST",
+    "ftp_user_env": "FTP_USER",
+    "ftp_pass_env": "FTP_PASS",
+    "ftp_remote_dir_env": "FTP_REMOTE_DIR",
+    "ftp_public_base_env": "FTP_PUBLIC_BASE",
+    "r2_access_key_env": "R2_ACCESS_KEY",
+    "r2_secret_key_env": "R2_SECRET_KEY",
+    "r2_bucket_env": "R2_BUCKET",
+    "r2_endpoint_env": "R2_ENDPOINT",
+    "r2_public_url_env": "R2_PUBLIC_URL"
+  }
+}

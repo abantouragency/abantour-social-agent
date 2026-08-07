@@ -1,0 +1,36 @@
+{
+  "style": "cinematic storybook / whimsical 3D-render look, navy + gold palette, soft cinematic lighting, branded for AbanTour travel agency",
+  "global_suffix": "cinematic 3D render, storybook illustration style, soft volumetric light, gentle depth of field, elegant navy (#0B1F3A) and gold (#D4AF37) color grade, highly detailed, no text, no watermark, vertical 9:16",
+  "prompts": {
+    "deals": [
+      "A whimsical storybook 3D scene of a glowing airplane ticket floating above a miniature city, golden hour light, navy and gold palette",
+      "A dreamy 3D illustration of a discount flight ticket unwrapping like a gift, sparkles, cinematic bokeh",
+      "A magical miniature airport at sunset with tiny travelers, storybook render, warm gold tones"
+    ],
+    "visa": [
+      "A cinematic 3D storybook scene of a glowing passport opening with golden light beams, elegant navy background",
+      "A whimsical embassy gate made of clouds and gold, dreamy 3D render, soft light",
+      "A passport and visa stamp levitating with sparkles, storybook illustration style"
+    ],
+    "hotel": [
+      "A luxurious 3D storybook hotel suite with a window view of a golden city, cinematic soft light",
+      "A dreamy infinity pool at sunset rendered as a whimsical 3D illustration, navy and gold",
+      "A cozy elegant hotel lobby with gold chandelier, storybook 3D render, warm glow"
+    ],
+    "trend": [
+      "A whimsical 3D scene of a famous landmark made of clouds and gold, trending travel destination, cinematic",
+      "A magical aerial view of a tropical island at golden hour, storybook 3D render",
+      "A dreamy northern-lights landscape as a 3D storybook illustration, navy sky and gold aurora"
+    ],
+    "tips": [
+      "A whimsical 3D illustration of a floating suitcase with travel essentials orbiting it, gold sparkles",
+      "A storybook scene of a glowing map with a dashed travel route, navy and gold",
+      "A cute 3D render of a checklist notebook with tiny airplane, soft cinematic light"
+    ],
+    "story": [
+      "A cinematic 3D storybook beach at sunset with a lone traveler watching the horizon, warm gold light",
+      "A whimsical old town street at dusk rendered in 3D, lanterns glowing gold",
+      "A dreamy 3D scene of a person making a wish on a bench under stars, navy night and gold sparks"
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: abantour-social-agent
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m modules.orchestrator_render
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: STAGE_TOKEN
+        generateValue: true
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: BALE_BOT_TOKEN
+        sync: false
+      - key: ADMIN_IDS
+        sync: false
+      - key: RENDER_BASE
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: INSTAGRAM_TOKEN
+        sync: false
+      - key: INSTAGRAM_PAGE_ID
+        sync: false
+      - key: INSTAGRAM_APP_ID
+        sync: false
+      - key: INSTAGRAM_APP_SECRET
+        sync: false
+      - key: TELEGRAM_CHANNEL_PRIVATE
+        sync: false
+      - key: TELEGRAM_CHANNEL_PUBLIC
+        sync: false
+      - key: BALE_CHANNEL
+        sync: false
+      - key: MEDIA_HOST_BACKEND
+        value: catbox
