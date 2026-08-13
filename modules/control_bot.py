@@ -11,7 +11,7 @@ Commands:
   /help           this menu
 Only ADMIN_ID(s) can use it.
 """
-import os, sys, json
+import os, sys, json, threading
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "modules"))
 from flask import Flask  # ensure flask present; not used here directly
@@ -88,24 +88,21 @@ async def cmd_publish(update, ctx):
         return await update.message.reply_text("❌ آیتم پیدا نشد یا قبلاً منتشر شده.")
     await update.message.reply_text("⏳ در حال انتشار...")
     results = []
-    # TELEGRAM
+    chan = os.environ.get("TELEGRAM_CHANNEL_PUBLIC", "")
+    # TELEGRAM (reel = video, info = photo)
     try:
         if item.get("reel_url"):
-            telegram_pub.send_video(item["reel_url"], item.get("caption", ""), public=True)
+            r = telegram_pub.publish_public(chan, item["reel_url"], item.get("caption", ""), kind="video")
+            results.append(f"تلگرام ریلز {'✅' if r.get('ok') else '❌ '+str(r.get('error',''))[:60]}")
         if item.get("info_url"):
-            telegram_pub.send_photo(item["info_url"], item.get("caption", ""), public=True)
-        results.append("تلگرام ✅")
+            r = telegram_pub.publish_public(chan, item["info_url"], item.get("caption", ""), kind="photo")
+            results.append(f"تلگرام اینفو {'✅' if r.get('ok') else '❌ '+str(r.get('error',''))[:60]}")
     except Exception as e:
         results.append(f"تلگرام ❌ {e}")
-    # INSTAGRAM
-    try:
-        if item.get("reel_url"):
-            # instagram_pub expects a public URL
-            telegram_pub  # placeholder; real call:
-            # instagram_pub.publish_reel(item["reel_url"], item.get("caption",""))
-            results.append("اینستا ⏳ (نیاز به توکن)")
-    except Exception as e:
-        results.append(f"اینستا ❌ {e}")
+    # BALE (same Bot API, different base handled by bale bot token; here we use telegram_pub for TG only)
+    # Instagram left as placeholder
+    if item.get("reel_url"):
+        results.append("اینستا ⏳ (توکن تنظیم نشده)")
     state_db.set_published(item_id, ["telegram"])
     await update.message.reply_text("نتیجه:\n" + "\n".join(results))
 
@@ -151,29 +148,57 @@ def run():
     state_db.init()
     tg_token = os.environ.get("TELEGRAM_BOT_TOKEN")
     bale_token = os.environ.get("BALE_BOT_TOKEN")
-    apps = []
+
+    def _start_app(app, label):
+        import asyncio
+        try:
+            asyncio.run(_run_polling(app, label))
+        except Exception as e:
+            state_db.log("ERROR", f"{label} bot crashed: {e}")
+
+    async def _run_polling(app, label):
+        await app.initialize()
+        await app.start()
+        await app.updater.start_polling()
+        state_db.log("INFO", f"{label} bot started")
+        # keep alive until stopped
+        import asyncio as aio
+        stop = app.updater.stop if hasattr(app.updater, "stop") else None
+        try:
+            while True:
+                await aio.sleep(3600)
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            pass
+        finally:
+            await app.updater.stop()
+            await app.stop()
+            await app.shutdown()
+
+    threads = []
     if tg_token:
-        apps.append(Application.builder().token(tg_token).build())
+        tg_app = Application.builder().token(tg_token).build()
+        _register(tg_app)
+        t = threading.Thread(target=_start_app, args=(tg_app, "Telegram"), daemon=True)
+        t.start(); threads.append(t)
     if bale_token:
-        # Bale uses a custom base URL
-        apps.append(Application.builder().token(bale_token)
-                    .base_url("https://tapi.bale.ai/bot").build())
-    for app in apps:
-        for h in [CommandHandler("start", cmd_start), CommandHandler("status", cmd_status),
-                  CommandHandler("pending", cmd_pending), CommandHandler("publish", cmd_publish),
-                  CommandHandler("now", cmd_now), CommandHandler("logs", cmd_logs),
-                  CommandHandler("help", cmd_help)]:
-            app.add_handler(h)
-    if not apps:
+        bale_app = Application.builder().token(bale_token).base_url("https://tapi.bale.ai/bot").build()
+        _register(bale_app)
+        t = threading.Thread(target=_start_app, args=(bale_app, "Bale"), daemon=True)
+        t.start(); threads.append(t)
+    if not threads:
         print("No bot tokens configured.")
         return
-    import asyncio
-    loop = asyncio.get_event_loop()
-    for app in apps:
-        loop.run_until_complete(app.initialize())
-        loop.run_until_complete(app.start())
-        loop.run_until_complete(app.updater.start_polling())
-    loop.run_forever()
+    # NOTE: this is called from a daemon thread inside the orchestrator,
+    # so we must NOT join() here (that would block Flask in the main thread).
+    # The daemon threads keep polling until the process exits.
+
+
+def _register(app):
+    for h in [CommandHandler("start", cmd_start), CommandHandler("status", cmd_status),
+              CommandHandler("pending", cmd_pending), CommandHandler("publish", cmd_publish),
+              CommandHandler("now", cmd_now), CommandHandler("logs", cmd_logs),
+              CommandHandler("help", cmd_help)]:
+        app.add_handler(h)
 
 
 if __name__ == "__main__":
