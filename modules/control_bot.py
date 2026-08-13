@@ -161,15 +161,16 @@ def run():
         await app.start()
         await app.updater.start_polling()
         state_db.log("INFO", f"{label} bot started")
+        state_db.set_flag(f"bot_{label}_alive", "1")
         # keep alive until stopped
         import asyncio as aio
-        stop = app.updater.stop if hasattr(app.updater, "stop") else None
         try:
             while True:
                 await aio.sleep(3600)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         finally:
+            state_db.set_flag(f"bot_{label}_alive", "0")
             await app.updater.stop()
             await app.stop()
             await app.shutdown()

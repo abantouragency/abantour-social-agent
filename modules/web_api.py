@@ -54,6 +54,15 @@ def set_published():
     return jsonify({"ok": True})
 
 
+@app.route("/api/bot_status")
+def bot_status():
+    import state_db as _db
+    return jsonify({
+        "telegram_alive": _db.get_flag("bot_Telegram_alive") == "1",
+        "bale_alive": _db.get_flag("bot_Bale_alive") == "1",
+    })
+
+
 if __name__ == "__main__":
     state_db.init()
     port = int(os.environ.get("PORT", 5000))

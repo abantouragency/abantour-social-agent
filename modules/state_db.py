@@ -101,6 +101,20 @@ def _now():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
+def set_flag(key, value):
+    c = _conn()
+    c.execute("""CREATE TABLE IF NOT EXISTS flags (k TEXT PRIMARY KEY, v TEXT)""")
+    c.execute("INSERT OR REPLACE INTO flags (k,v) VALUES (?,?)", (key, str(value)))
+    c.commit(); c.close()
+
+
+def get_flag(key, default=None):
+    c = _conn()
+    row = c.execute("SELECT v FROM flags WHERE k=?", (key,)).fetchone()
+    c.close()
+    return row["v"] if row else default
+
+
 if __name__ == "__main__":
     init()
     print("state_db ready at", DB)
