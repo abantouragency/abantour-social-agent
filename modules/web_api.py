@@ -63,6 +63,14 @@ def bot_status():
     })
 
 
+@app.route("/api/pc_requests")
+def pc_requests():
+    if not _auth():
+        return jsonify({"error": "unauthorized"}), 401
+    import state_db as _db
+    return jsonify({"requests": _db.take_pc_requests()})
+
+
 if __name__ == "__main__":
     state_db.init()
     port = int(os.environ.get("PORT", 5000))

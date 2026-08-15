@@ -115,6 +115,31 @@ def get_flag(key, default=None):
     return row["v"] if row else default
 
 
+def add_pc_request(pillar):
+    c = _conn()
+    c.execute("""CREATE TABLE IF NOT EXISTS pc_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pillar TEXT,
+        ts TEXT,
+        status TEXT DEFAULT 'pending'
+    )""")
+    c.execute("INSERT INTO pc_requests (pillar, ts, status) VALUES (?,?,?)",
+              (pillar, _now(), "pending"))
+    c.commit(); c.close()
+
+
+def take_pc_requests():
+    """Return pending PC requests and mark them done."""
+    c = _conn()
+    rows = c.execute("SELECT * FROM pc_requests WHERE status='pending' ORDER BY id").fetchall()
+    ids = [r["id"] for r in rows]
+    if ids:
+        c.execute(f"UPDATE pc_requests SET status='done' WHERE id IN ({','.join('?'*len(ids))})", ids)
+        c.commit()
+    c.close()
+    return [dict(r) for r in rows]
+
+
 if __name__ == "__main__":
     init()
     print("state_db ready at", DB)

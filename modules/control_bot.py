@@ -11,7 +11,7 @@ Commands:
   /help           this menu
 Only ADMIN_ID(s) can use it.
 """
-import os, sys, json, threading
+import os, sys, json, threading, datetime
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "modules"))
 from flask import Flask  # ensure flask present; not used here directly
@@ -19,7 +19,7 @@ import state_db, telegram_pub
 
 try:
     from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-    from telegram.ext import Application, CommandHandler, ContextTypes
+    from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
     HAVE_PTB = True
 except Exception:
     HAVE_PTB = False
@@ -73,7 +73,18 @@ async def cmd_status(update, ctx):
 async def cmd_pending(update, ctx):
     if not _allowed(update.effective_user.id):
         return
-    await update.message.reply_text(_fmt_pending(), parse_mode="Markdown")
+    items = state_db.pending()
+    if not items:
+        return await update.message.reply_text("✅ چیزی برای انتشار نیست.")
+    # inline keyboard: one row per item with a Publish button
+    kb = []
+    for it in items[:10]:
+        label = f"انتشار: {it.get('pillar')}/{it.get('slot')}"
+        kb.append([InlineKeyboardButton(label, callback_data=f"pub:{it['id']}")])
+    kb.append([InlineKeyboardButton("🔄 رفرش", callback_data="refresh_pending")])
+    await update.message.reply_text(
+        "📥 *محتوای آماده — روی دکمه بزنید:*",
+        parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(kb))
 
 
 async def cmd_publish(update, ctx):
@@ -82,47 +93,71 @@ async def cmd_publish(update, ctx):
     if not ctx.args:
         return await update.message.reply_text("استفاده: /publish <id>")
     item_id = ctx.args[0]
-    # fetch item
     item = next((i for i in state_db.pending() if i["id"] == item_id), None)
     if not item:
         return await update.message.reply_text("❌ آیتم پیدا نشد یا قبلاً منتشر شده.")
+    await _do_publish(update, item_id, item)
+
+
+async def _do_publish(update, item_id, item, edit=False):
     await update.message.reply_text("⏳ در حال انتشار...")
     results = []
     chan = os.environ.get("TELEGRAM_CHANNEL_PUBLIC", "")
-    # TELEGRAM (reel = video, info = photo)
     try:
         if item.get("reel_url"):
             r = telegram_pub.publish_public(chan, item["reel_url"], item.get("caption", ""), kind="video")
-            results.append(f"تلگرام ریلز {'✅' if r.get('ok') else '❌ '+str(r.get('error',''))[:60]}")
+            results.append(f"تلگرام ریلز {'✅' if r.get('ok') else '❌ ' + str(r.get('error', ''))[:60]}")
         if item.get("info_url"):
             r = telegram_pub.publish_public(chan, item["info_url"], item.get("caption", ""), kind="photo")
-            results.append(f"تلگرام اینفو {'✅' if r.get('ok') else '❌ '+str(r.get('error',''))[:60]}")
+            results.append(f"تلگرام اینفو {'✅' if r.get('ok') else '❌ ' + str(r.get('error', ''))[:60]}")
     except Exception as e:
         results.append(f"تلگرام ❌ {e}")
-    # BALE (same Bot API, different base handled by bale bot token; here we use telegram_pub for TG only)
-    # Instagram left as placeholder
     if item.get("reel_url"):
         results.append("اینستا ⏳ (توکن تنظیم نشده)")
     state_db.set_published(item_id, ["telegram"])
-    await update.message.reply_text("نتیجه:\n" + "\n".join(results))
+    msg = "نتیجه:\n" + "\n".join(results)
+    if edit and update.callback_query:
+        await update.callback_query.edit_message_text(msg)
+    else:
+        await update.message.reply_text(msg)
+
+
+async def btn_callback(update, ctx):
+    if not _allowed(update.effective_user.id):
+        return
+    q = update.callback_query
+    await q.answer()
+    data = q.data
+    if data == "refresh_pending":
+        items = state_db.pending()
+        if not items:
+            return await q.edit_message_text("✅ چیزی برای انتشار نیست.")
+        kb = []
+        for it in items[:10]:
+            kb.append([InlineKeyboardButton(f"انتشار: {it.get('pillar')}/{it.get('slot')}", callback_data=f"pub:{it['id']}")])
+        kb.append([InlineKeyboardButton("🔄 رفرش", callback_data="refresh_pending")])
+        return await q.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(kb))
+    if data.startswith("pub:"):
+        item_id = data[4:]
+        item = next((i for i in state_db.pending() if i["id"] == item_id), None)
+        if not item:
+            return await q.edit_message_text("❌ قبلاً منتشر شده یا حذف شد.")
+        # reuse publish logic (reply via callback query message)
+        await _do_publish(update, item_id, item, edit=True)
 
 
 async def cmd_now(update, ctx):
     if not _allowed(update.effective_user.id):
         return
     pillar = ctx.args[0] if ctx.args else "deals"
-    # Ask the Render worker to produce now (via web API if configured)
-    if RENDER_BASE:
-        import urllib.request
-        try:
-            req = urllib.request.Request(f"{RENDER_BASE}/api/produce_now",
-                data=json.dumps({"pillar": pillar}).encode(),
-                headers={"Content-Type": "application/json"}, method="POST")
-            urllib.request.urlopen(req, timeout=30)
-            return await update.message.reply_text(f"🎬 درخواست تولید فوری برای {pillar} ارسال شد.")
-        except Exception as e:
-            return await update.message.reply_text(f"❌ خطا: {e}")
-    await update.message.reply_text("RENDER_BASE تنظیم نشده.")
+    # write request into state_db; PC watchdog pulls it via /api/pc_requests
+    try:
+        state_db.add_pc_request(pillar)
+        return await update.message.reply_text(
+            f"🎬 درخواست تولید فوری برای ستون «{pillar}» ثبت شد.\n"
+            f"PC شما (در صورت روشن بودن + اجرای watchdog) آن را می‌سازد و به صف اضافه می‌کند.")
+    except Exception as e:
+        return await update.message.reply_text(f"❌ خطا: {e}")
 
 
 async def cmd_logs(update, ctx):
@@ -198,7 +233,8 @@ def _register(app):
     for h in [CommandHandler("start", cmd_start), CommandHandler("status", cmd_status),
               CommandHandler("pending", cmd_pending), CommandHandler("publish", cmd_publish),
               CommandHandler("now", cmd_now), CommandHandler("logs", cmd_logs),
-              CommandHandler("help", cmd_help)]:
+              CommandHandler("help", cmd_help),
+              CallbackQueryHandler(btn_callback)]:
         app.add_handler(h)
 
 

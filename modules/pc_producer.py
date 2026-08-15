@@ -57,9 +57,39 @@ def run_slot(slot):
         raise
 
 
+def watch(interval=30):
+    """Watchdog: pull /now requests from Render and produce them. Runs forever on PC."""
+    import time, urllib.request
+    print(f"[PC] watchdog started (poll every {interval}s)")
+    while True:
+        try:
+            if RENDER_BASE and STAGE_TOKEN:
+                req = urllib.request.Request(
+                    f"{RENDER_BASE}/api/pc_requests",
+                    headers={"X-Stage-Token": STAGE_TOKEN}, method="GET")
+                data = json.loads(urllib.request.urlopen(req, timeout=30).read().decode())
+                for r in data.get("requests", []):
+                    pillar = r.get("pillar", "deals")
+                    print(f"[PC] producing requested pillar: {pillar}")
+                    produce_and_stage(_slot_for_pillar(pillar))
+            else:
+                print("[PC] RENDER_BASE/STAGE_TOKEN not set; skipping remote poll")
+        except Exception as e:
+            print(f"[PC] watchdog poll error: {e}")
+        time.sleep(interval)
+
+
+def _slot_for_pillar(pillar):
+    # map pillar to a slot name; default to a time-based slot
+    h = datetime.datetime.now().hour
+    return "morning" if h < 15 else "evening"
+
+
 if __name__ == "__main__":
-    # default: produce both daily slots when run directly
     import sys
-    slots = sys.argv[1:] or ["morning", "evening"]
-    for s in slots:
-        run_slot(s)
+    if len(sys.argv) > 1 and sys.argv[1] == "watch":
+        watch()
+    else:
+        slots = sys.argv[1:] or ["morning", "evening"]
+        for s in slots:
+            run_slot(s)
