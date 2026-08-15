@@ -131,6 +131,9 @@ def add_pc_request(pillar):
 def take_pc_requests():
     """Return pending PC requests and mark them done."""
     c = _conn()
+    c.execute("""CREATE TABLE IF NOT EXISTS pc_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pillar TEXT, ts TEXT, status TEXT DEFAULT 'pending')""")
     rows = c.execute("SELECT * FROM pc_requests WHERE status='pending' ORDER BY id").fetchall()
     ids = [r["id"] for r in rows]
     if ids:
